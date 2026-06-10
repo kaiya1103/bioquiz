@@ -54,6 +54,18 @@ h1{
 
 <h1>生物4択クイズ</h1>
 
+<div style="margin-bottom:20px;">
+
+<button onclick="location.href='quiz.html?set=bio'">
+生物基礎
+</button>
+
+<button onclick="location.href='quiz.html?set=genetics'">
+遺伝
+</button>
+
+</div>
+
 <div id="quizArea">
 
 <div id="count"></div>
@@ -75,6 +87,8 @@ h1{
 
 const params = new URLSearchParams(location.search);
 const setName = params.get("set") || "bio";
+
+
 
 let quizData = questionSets[setName];
 
@@ -242,7 +256,7 @@ function reviewWrongQuestions(){
 
     `;
 
-    document.getElementById("nextBtn").onclick = ()=>{
+       document.getElementById("nextBtn").onclick = ()=>{
 
         current++;
 
