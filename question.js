@@ -144,7 +144,7 @@ choices:[
 "チェイス"
 ],
 answer:0,
-explanation:"肺炎球菌を用いた"}
+explanation:"肺炎球菌を用いた"
 },
 
 {
