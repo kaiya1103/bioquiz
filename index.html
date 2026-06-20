@@ -1,171 +1,275 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>テスト勉強 問題集</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            max-width: 700px;
-            margin: auto;
-            padding: 20px;
-            text-align: center;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        h1 {
-            color: green;
-        }
+<title>テスト勉強 問題集</title>
 
-        #question {
-            font-size: 22px;
-            margin: 30px 0;
-        }
+<style>
 
-        .choice {
-            display: block;
-            width: 100%;
-            margin: 10px 0;
-            padding: 15px;
-            font-size: 18px;
-        }
+body{
+    font-family:sans-serif;
+    max-width:700px;
+    margin:auto;
+    padding:20px;
+    text-align:center;
+}
 
-        #result {
-            margin-top: 20px;
-            font-size: 20px;
-            font-weight: bold;
-        }
+h1{
+    color:green;
+}
 
-        #nextBtn {
-            margin-top: 20px;
-            padding: 12px 25px;
-            font-size: 18px;
-        }
-    </style>
-    <script src="question.js"></script>
+#question{
+    font-size:22px;
+    margin:30px 0;
+}
+
+.choice{
+    display:block;
+    width:100%;
+    margin:10px 0;
+    padding:15px;
+    font-size:18px;
+}
+
+#result{
+    margin-top:20px;
+    font-size:20px;
+    font-weight:bold;
+}
+
+#nextBtn{
+    margin-top:20px;
+    padding:12px 25px;
+    font-size:18px;
+}
+
+</style>
+
+<script src="question.js"></script>
+
 </head>
 <body>
 
-    <h1>テスト勉強 問題集</h1>
+<h1>テスト勉強 問題集</h1>
 
-    <div style="margin-bottom:20px;">
-        <button onclick="location.href='index.html?set=one'">1学期中間考査</button>
-        <button onclick="location.href='index.html?set=two'">1学期期末考査</button>
-        <button onclick="location.href='index.html?set=three'">2学期中間考査</button>
-        <button onclick="location.href='index.html?set=four'">2学期期末考査</button>
-        <button onclick="location.href='index.html?set=five'">学年末考査</button>
-        <button onclick="location.href='index.html?set=others'">その他</button>
-    </div>
+<div style="margin-bottom:20px;">
 
-    <div id="quizArea">
+<button onclick="location.href='index.html?set=one'">
+1学期中間考査
+</button>
+
+<button onclick="location.href='index.html?set=two'">
+1学期期末考査
+</button>
+
+<button onclick="location.href='index.html?set=three'">
+2学期中間考査
+</button>
+
+<button onclick="location.href='index.html?set=four'">
+2学期期末考査
+</button>
+
+<button onclick="location.href='index.html?set=five'">
+学年末考査
+</button>
+
+<button onclick="location.href='index.html?set=others'">
+その他
+</button>
+
+</div>
+
+<div id="quizArea">
+
+<div id="count"></div>
+
+<div id="question"></div>
+
+<div id="choices"></div>
+
+<div id="result"></div>
+
+<button id="nextBtn" style="display:none;">
+次の問題
+</button>
+
+</div>
+
+<script>
+
+
+const params = new URLSearchParams(location.search);
+const setName = params.get("set") || "one";
+
+let quizData = questionSets[setName];
+
+if(!quizData){
+    quizData = questionSets["one"];
+}
+
+quizData = [...quizData];
+
+shuffle(quizData);
+
+let current = 0;
+let score = 0;
+let wrongQuestions = [];
+
+showQuestion();
+
+function shuffle(array){
+    for(let i=array.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [array[i],array[j]]=[array[j],array[i]];
+    }
+}
+
+function showQuestion(){
+
+    document.getElementById("result").textContent = "";
+    document.getElementById("nextBtn").style.display = "none";
+
+    const q = quizData[current];
+
+    document.getElementById("count").textContent =
+        `問題 ${current+1} / ${quizData.length}`;
+
+    document.getElementById("question").textContent =
+        q.question;
+
+    const choicesDiv =
+        document.getElementById("choices");
+
+    choicesDiv.innerHTML = "";
+
+    q.choices.forEach((choice,index)=>{
+
+        const btn = document.createElement("button");
+
+        btn.className = "choice";
+        btn.textContent = choice;
+
+        btn.onclick = ()=>checkAnswer(index);
+
+        choicesDiv.appendChild(btn);
+
+    });
+}
+
+function checkAnswer(index){
+
+    const q = quizData[current];
+
+    const buttons =
+        document.querySelectorAll(".choice");
+
+    buttons.forEach(btn=>btn.disabled=true);
+
+    if(index === q.answer){
+
+        score++;
+
+        document.getElementById("result").innerHTML =
+        `
+        〇 正解！<br>
+        解説：${q.explanation}
+        `;
+
+    }else{
+
+        document.getElementById("result").innerHTML =
+        `
+        × 不正解<br>
+        正解：${q.choices[q.answer]}<br>
+        解説：${q.explanation}
+        `;
+
+        wrongQuestions.push(q);
+    }
+
+    document.getElementById("nextBtn").style.display =
+        "inline-block";
+}
+
+document.getElementById("nextBtn").onclick = ()=>{
+
+    current++;
+
+    if(current >= quizData.length){
+        finishQuiz();
+        return;
+    }
+
+    showQuestion();
+};
+
+function finishQuiz(){
+
+    let html = `
+        <h2>終了！</h2>
+        <p>${quizData.length}問中 ${score}問正解</p>
+    `;
+
+    if(wrongQuestions.length > 0){
+
+        html += `
+            <p>間違えた問題：${wrongQuestions.length}問</p>
+
+            <button onclick="reviewWrongQuestions()">
+                間違えた問題を復習
+            </button>
+        `;
+
+    }else{
+
+        html += `
+            <p>全問正解です！</p>
+        `;
+    }
+
+    document.getElementById("quizArea").innerHTML = html;
+}
+
+function reviewWrongQuestions(){
+
+    quizData = [...wrongQuestions];
+
+    shuffle(quizData);
+
+    current = 0;
+    score = 0;
+
+    wrongQuestions = [];
+
+    document.getElementById("quizArea").innerHTML = `
         <div id="count"></div>
         <div id="question"></div>
         <div id="choices"></div>
         <div id="result"></div>
-        <button id="nextBtn" style="display:none;">次の問題</button>
-    </div>
+        <button id="nextBtn" style="display:none;">
+            次の問題
+        </button>
+    `;
 
-    <script>
-        // URLのパラメータから問題セット名を取得（デフォルトは "one"）
-        const params = new URLSearchParams(location.search);
-        const setName = params.get("set") || "one";
+    document.getElementById("nextBtn").onclick = ()=>{
 
-        let quizData = questionSets[setName];
+        current++;
 
-        // 指定されたセットが存在しない場合は "one" を代用
-        if (!quizData) {
-            quizData = questionSets["one"];
+        if(current >= quizData.length){
+            finishQuiz();
+            return;
         }
 
-        // 元のデータを破壊しないようにコピーしてシャッフル
-        quizData = [...quizData];
-        shuffle(quizData);
-
-        let current = 0;
-        let score = 0;
-        let wrongQuestions = [];
-
-        // 最初の問題を表示
         showQuestion();
+    };
 
-        // 配列をシャッフルする関数（フィッシャー・イェーツのシャッフル）
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-        }
+    showQuestion();
+}
 
-        // 問題を表示する関数
-        function showQuestion() {
-            document.getElementById("result").textContent = "";
-            document.getElementById("nextBtn").style.display = "none";
+</script>
 
-            const q = quizData[current];
-
-            document.getElementById("count").textContent = `問題 ${current + 1} / ${quizData.length}`;
-            document.getElementById("question").textContent = q.question;
-
-            const choicesDiv = document.getElementById("choices");
-            choicesDiv.innerHTML = "";
-
-            q.choices.forEach((choice, index) => {
-                const btn = document.createElement("button");
-                btn.className = "choice";
-                btn.textContent = choice;
-                btn.onclick = () => checkAnswer(index);
-                choicesDiv.appendChild(btn);
-            });
-        }
-
-        // 正誤判定をする関数
-        function checkAnswer(index) {
-            const q = quizData[current];
-            const buttons = document.querySelectorAll(".choice");
-
-            // 選択肢ボタンをすべて無効化
-            buttons.forEach(btn => btn.disabled = true);
-
-            if (index === q.answer) {
-                score++;
-                document.getElementById("result").innerHTML = `
-                    〇 正解！<br>
-                    解説：${q.explanation}
-                `;
-            } else {
-                document.getElementById("result").innerHTML = `
-                    × 不正解<br>
-                    正解：${q.choices[q.answer]}<br>
-                    解説：${q.explanation}
-                `;
-                wrongQuestions.push(q);
-            }
-
-            document.getElementById("nextBtn").style.display = "inline-block";
-        }
-
-        // 「次の問題」ボタンのクリックイベント
-        document.getElementById("nextBtn").onclick = () => {
-            current++;
-
-            if (current >= quizData.length) {
-                finishQuiz();
-                return;
-            }
-
-            showQuestion();
-        };
-
-        // クイズ終了時の画面を表示する関数
-        function finishQuiz() {
-            let html = `
-                <h2>終了！</h2>
-                <p>${quizData.length}問中 ${score}問正解</p>
-            `;
-
-            if (wrongQuestions.length > 0) {
-                html += `
-                    <p>間違えた問題：${wrongQuestions.length}問</p>
-                    <button onclick="reviewWrongQuestions()">間違えた問題を復習</button>
-                `;
-            } else {
+</body>
+</html>
