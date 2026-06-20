@@ -73,8 +73,6 @@ explanation:"複数本の繊毛で移動する。"
 ],
 
 two:[
-
-[
   {
     "question": "DNAのヌクレオチドを構成しないものは？",
     "choices": [
