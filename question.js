@@ -221,6 +221,6 @@ const questionSets = {
       ],
       "answer": 2,
       "explanation": "メンデルはエンドウを用いて遺伝の法則を発見した。"
-    } // 末尾の不要なカンマを削除
-  ]
+    } 
+]
 };
