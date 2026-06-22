@@ -3,68 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>生物分類技能検定 問題集</title>
-
+<title>テスト勉強 問題集</title>
 <style>
-
-body{
-    font-family:sans-serif;
-    max-width:700px;
-    margin:auto;
-    padding:20px;
-    text-align:center;
+body {
+font-family: sans-serif;
+max-width: 700px;
+margin: auto;
+padding: 20px;
+text-align: center;
+background-color: #f9f9f9;
+color: #333;
 }
 
-h1{
-    color:green;
+h1 {
+color: green;
+margin-bottom: 20px;
 }
 
-#question{
-    font-size:22px;
-    margin:30px 0;
+/* 範囲選択ボタンのスタイル */
+.nav-buttons {
+margin-bottom: 25px;
+display: flex;
+flex-wrap: wrap;
+justify-content: center;
+gap: 10px;
 }
 
-.choice{
-    display:block;
-    width:100%;
-    margin:10px 0;
-    padding:15px;
-    font-size:18px;
+.nav-buttons button {
+padding: 12px 20px;
+font-size: 15px;
+font-weight: bold;
+cursor: pointer;
+background-color: #fff;
+border: 2px solid #ccc;
+border-radius: 6px;
+transition: 0.2s;
 }
 
-#result{
-    margin-top:20px;
-    font-size:20px;
-    font-weight:bold;
+.nav-buttons button:hover {
+background-color: #e8f5e9;
+border-color: #81c784;
 }
 
-#nextBtn, .action-btn{
-    margin-top:20px;
-    padding:12px 25px;
-    font-size:18px;
+.nav-buttons button.active {
+background-color: green;
+color: white;
+border-color: green;
 }
 
+#quizArea {
+background: #fff;
+padding: 25px;
+border-radius: 8px;
+box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+min-height: 250px;
+}
+
+#count {
+font-size: 14px;
+color: #666;
+margin-bottom: 10px;
+}
+
+#question {
+font-size: 20px;
+font-weight: bold;
+margin: 20px 0;
+line-height: 1.5;
+text-align: left;
+}
+
+.choice {
+display: block;
+width: 100%;
+margin: 10px 0;
+padding: 15px;
+font-size: 16px;
+cursor: pointer;
+text-align: left;
+background-color: #f1f8e9;
+border: 1px solid #c5e1a5;
+border-radius: 6px;
+transition: 0.2s;
+}
+
+.choice:hover:not(:disabled) {
+background-color: #dcedc8;
+}
+
+.choice:disabled {
+cursor: not-allowed;
+opacity: 0.7;
+}
+
+#result {
+margin-top: 20px;
+font-size: 16px;
+border-radius: 6px;
+text-align: left;
+line-height: 1.6;
+}
+
+#nextBtn, .action-btn {
+margin-top: 20px;
+padding: 12px 30px;
+font-size: 16px;
+font-weight: bold;
+color: white;
+background-color: green;
+border: none;
+border-radius: 4px;
+cursor: pointer;
+}
+
+#nextBtn:hover, .action-btn:hover {
+background-color: #1b5e20;
+}
 </style>
-
 <script src="question.js"></script>
-
 </head>
 <body>
 
-<h1>生物分類技能検定</h1>
+<h1>テスト勉強 問題集</h1>
 
-<div style="margin-bottom:20px;">
-<button onclick="location.href='index.html?set=animals'">動物</button>
-<button onclick="location.href='index.html?set=birds'">鳥類</button>
-<button onclick="location.href='index.html?set=arthropod'">節足動物</button>
-<button onclick="location.href='index.html?set=plants'">植物</button>
-<button onclick="location.href='index.html?set=classification'">植物分類</button>
-<button onclick="location.href='index.html?set=others'">その他</button>
+<div class="nav-buttons">
+<button id="btn-one" onclick="location.search='?set=one'">生物の特徴・細胞（第1章）</button>
+<button id="btn-two" onclick="location.search='?set=two'">遺伝子とその働き（第2章）</button>
 </div>
 
 <div id="quizArea">
-
     <div id="quizMain">
         <div id="count"></div>
         <div id="question"></div>
@@ -75,64 +142,62 @@ h1{
 
     <div id="resultArea" style="display:none;">
         <h2>終了！</h2>
-        <p id="scoreText"></p>
-        <div id="reviewSection"></div>
+        <p id="finalScoreText" style="font-size:20px; font-weight:bold;"></p>
+        <div id="reviewActions"></div>
     </div>
-
 </div>
 
 <script>
-
+// URLのパラメータからクイズのセット名を取得（デフォルトは 'one'）
 const params = new URLSearchParams(location.search);
-const setName = params.get("set") || "animals";
+const setName = params.get("set") || "one";
 
-let quizData = [];
+// 現在選ばれているボタンのスタイルをアクティブ（緑色）にする
+const activeBtn = document.getElementById(`btn-${setName}`);
+if (activeBtn) activeBtn.className = "active";
+
+// question.js から指定されたセットのデータを取得
+let quizData = questionSets[setName];
+if (!quizData) {
+quizData = questionSets["one"];
+}
+
+// データを安全に独立コピーしてシャッフル（バグ防止）
+quizData = JSON.parse(JSON.stringify(quizData));
+shuffle(quizData);
+
 let current = 0;
 let score = 0;
 let wrongQuestions = [];
 
-// --- データ読み込みと初期化 ---
-// question.js が存在しない、または形式が違う場合のためのバックアップデータ
-const fallbackQuestions = [
-    { question: "テスト問題1：昆虫の足は何本？", choices: ["4本", "6本", "8本"], answer: 1, explanation: "昆虫の足は6本です。" },
-    { question: "テスト問題2：鳥類の先祖とされるのは？", choices: ["恐竜", "両生類", "魚類"], answer: 0, explanation: "鳥類は獣脚類（恐竜）から進化したとされています。" }
-];
+// クイズの開始
+showQuestion();
 
-// 起動時にデータをセットする関数
-function initQuiz() {
-    // 1. まず question.js のデータ（questionSets）があるか確認
-    if (typeof questionSets !== 'undefined' && questionSets[setName]) {
-        quizData = JSON.parse(JSON.stringify(questionSets[setName]));
-    } else if (typeof questionSets !== 'undefined' && questionSets["animals"]) {
-        quizData = JSON.parse(JSON.stringify(questionSets["animals"]));
-    } else {
-        // 2. 万が一データが取れなければバックアップを使用
-        quizData = JSON.parse(JSON.stringify(fallbackQuestions));
+// 「次の問題」ボタンのクリック処理（一度登録すれば最後まで有効です）
+document.getElementById("nextBtn").onclick = () => {
+    current++;
+    if (current >= quizData.length) {
+        finishQuiz();
+        return;
     }
-    
-    shuffle(quizData);
     showQuestion();
-}
+};
 
-function shuffle(array){
-    for(let i=array.length-1;i>0;i--){
-        const j=Math.floor(Math.random()*(i+1));
-        [array[i],array[j]]=[array[j],array[i]];
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
     }
 }
 
-function showQuestion(){
+function showQuestion() {
     document.getElementById("result").textContent = "";
+    document.getElementById("result").style.backgroundColor = "transparent";
+    document.getElementById("result").style.border = "none";
     document.getElementById("nextBtn").style.display = "none";
 
-    // 安全対策：もし問題データが空なら何もしない
-    if (quizData.length === 0) return;
-
     const q = quizData[current];
-
-    document.getElementById("count").textContent =
-        `問題 ${current+1} / ${quizData.length}`;
-
+    document.getElementById("count").textContent = `問題 ${current + 1} / ${quizData.length}`;
     document.getElementById("question").textContent = q.question;
 
     const choicesDiv = document.getElementById("choices");
@@ -147,78 +212,72 @@ function showQuestion(){
     });
 }
 
-function checkAnswer(index){
+function checkAnswer(index) {
     const q = quizData[current];
     const buttons = document.querySelectorAll(".choice");
     buttons.forEach(btn => btn.disabled = true);
 
-    if(index === q.answer){
+    const resultDiv = document.getElementById("result");
+    resultDiv.style.border = "1px solid";
+    resultDiv.style.padding = "15px";
+
+    if (index === q.answer) {
         score++;
-        document.getElementById("result").innerHTML = `〇 正解！<br>解説：${q.explanation}`;
+        resultDiv.style.backgroundColor = "#e8f5e9";
+        resultDiv.style.borderColor = "#a5d6a7";
+        resultDiv.innerHTML = `<span style="color:green; font-weight:bold; font-size:20px;">〇 正解！</span><br>解説：${q.explanation}`;
+        buttons[index].style.backgroundColor = "#c8e6c9";
     } else {
-        document.getElementById("result").innerHTML = `× 不正解<br>正解：${q.choices[q.answer]}<br>解説：${q.explanation}`;
+        resultDiv.style.backgroundColor = "#ffebee";
+        resultDiv.style.borderColor = "#ef9a9a";
+        resultDiv.innerHTML = `<span style="color:red; font-weight:bold; font-size:20px;">× 不正解</span><br>正解：${q.choices[q.answer]}<br>解説：${q.explanation}`;
+        buttons[index].style.backgroundColor = "#ffcdd2";
+        buttons[q.answer].style.backgroundColor = "#c8e6c9"; // 正解の選択肢を緑色でハイライト
+        
+        // データを安全にディープコピーして間違えた問題リストに入れる
         wrongQuestions.push(JSON.parse(JSON.stringify(q)));
     }
-
     document.getElementById("nextBtn").style.display = "inline-block";
 }
 
-// ★「次の問題」ボタンのクリックイベント
-document.getElementById("nextBtn").onclick = () => {
-    current++;
-
-    // 全問解き終わったら終了画面へ
-    if(current >= quizData.length){
-        finishQuiz();
-        return;
-    }
-
-    // 次の問題を表示
-    showQuestion();
-};
-
-function finishQuiz(){
+function finishQuiz() {
+    // クイズメイン画面を隠し、終了用の画面を表示
     document.getElementById("quizMain").style.display = "none";
     document.getElementById("resultArea").style.display = "block";
 
-    document.getElementById("scoreText").textContent = `${quizData.length}問中 ${score}問正解`;
+    // スコアの表示
+    document.getElementById("finalScoreText").textContent = `${quizData.length}問中 ${score}問正解`;
 
-    const reviewSection = document.getElementById("reviewSection");
+    const reviewActions = document.getElementById("reviewActions");
 
-    if(wrongQuestions.length > 0){
-        reviewSection.innerHTML = `
+    if (wrongQuestions.length > 0) {
+        reviewActions.innerHTML = `
             <p>間違えた問題：${wrongQuestions.length}問</p>
-            <button class="action-btn" onclick="reviewWrongQuestions()">
-                間違えた問題を復習
-            </button>
+            <button class="action-btn" onclick="reviewWrongQuestions()">間違えた問題を復習</button>
+            <button class="action-btn" style="background-color:#757575; margin-left:10px;" onclick="location.reload()">最初からやり直す</button>
         `;
     } else {
-        reviewSection.innerHTML = `<p>全問正解です！</p>`;
+        reviewActions.innerHTML = `<p style="color:green; font-weight:bold; font-size:20px;">🎉 全問正解です！お見事！ 🎉</p>`;
     }
 }
 
-function reviewWrongQuestions(){
-    // 間違えた問題をディープコピーしてクイズデータに再設定
+function reviewWrongQuestions() {
+    // 間違えた問題を安全にディープコピーしてクイズ用データにセット
     quizData = JSON.parse(JSON.stringify(wrongQuestions));
-    
     shuffle(quizData);
 
-    // カウンターとスコアをリセット
+    // カウンターと配列を完全に初期化
     current = 0;
     score = 0;
-    wrongQuestions = []; 
+    wrongQuestions = [];
 
-    // 画面切り替え
+    // 表示エリアを切り替える（HTMLそのものを壊さないため、ボタンのイベントが生き残る）
     document.getElementById("quizMain").style.display = "block";
     document.getElementById("resultArea").style.display = "none";
 
     // 復習の1問目を表示
     showQuestion();
 }
-
-// 画面の準備ができたらクイズを開始
-document.addEventListener("DOMContentLoaded", initQuiz);
-
 </script>
 
 </body>
